@@ -1,7 +1,17 @@
 defmodule TodoList do
   defstruct auto_id: 1, entries: %{}
 
-  # def new(), do: %TodoList{}
+  def init do
+    %TodoList{}
+  end
+
+  def handle_cast({:add_entry, entry}, state) do
+    add_entry(state, entry)
+  end
+
+  def handle_call({:entries, date}, state) do
+    {entries(state, date), state}
+  end
 
   def new(entries \\ []) do
     Enum.reduce(
@@ -85,41 +95,43 @@ defmodule TodoList.CsvImporter do
     end
 end
 
-defmodule TodoServer do
-  def start do
-    pid = spawn(fn -> loop(TodoList.new()) end)
-    Process.register(pid, :todo_server)
+defmodule TodoServerProcess do
+  def start(callback_module) do
+    spawn(fn ->
+      initial_state = callback_module.init()
+      loop(callback_module, initial_state)
+    end)
   end
 
-  defp loop(todo_list) do
-    new_todo_list =
-      receive do
-        message -> process_message(todo_list, message)
-      end
-
-      loop(new_todo_list)
-  end
-
-  def add_entry(new_entry) do
-    send(:todo_server, {:add_entry, new_entry})
-  end
-
-  defp process_message(todo_list, {:add_entry, new_entry}) do
-    TodoList.add_entry(todo_list, new_entry)
-  end
-
-  defp process_message(todo_list, {:entries, caller, date}) do
-    send(caller, {:todo_entries, TodoList.entries(todo_list, date)})
-    todo_list
-  end
-
-  def entries(date) do
-    send(:todo_server, {:entries, self(), date})
+  defp loop(callback_module, current_state) do
     receive do
-      {:todo_entries, entries} -> entries
-    after
-      5000 -> {:error, :timeout}
+      {:call, request, caller} ->
+        {response, new_state} = callback_module.handle_call(request, current_state)
+        send(caller, {:response, response})
+        loop(callback_module, new_state)
+      {:cast, request} ->
+        new_state = callback_module.handle_cast(request, current_state)
+        loop(callback_module, new_state)
     end
+  end
+
+  def call(server_pid, request) do
+    send(server_pid, {:call, request, self()})
+    receive do
+      {:response, response} -> response
+    end
+  end
+
+  def cast(server_pid, request) do
+    send(server_pid, {:cast, request})
+  end
+
+  def add_entry(pid, entry) do
+    cast(pid, {:add_entry, entry})
+  end
+
+  def get_entry(pid, date) do
+    call(pid, {:entries, date})
   end
 
 end
