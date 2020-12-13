@@ -3,7 +3,8 @@ defmodule Todo.Database do
 
   @db_folder "./persist"
 
-  def start do
+  def start() do
+    IO.inspect("Starting database worker")
     GenServer.start(__MODULE__, nil, name: __MODULE__)
   end
 
@@ -16,6 +17,7 @@ defmodule Todo.Database do
   end
 
   @impl GenServer
+  @spec init(any) :: {:ok, nil}
   def init(_) do
     File.mkdir_p!(@db_folder)
     {:ok, nil}

@@ -5,6 +5,7 @@ defmodule Todo.Server do
     GenServer.start(Todo.Server, name)
   end
 
+  @spec add_entry(atom | pid | {atom, any} | {:via, atom, any}, any) :: :ok
   def add_entry(todo_server, new_entry) do
     GenServer.cast(todo_server, {:add_entry, new_entry})
   end
