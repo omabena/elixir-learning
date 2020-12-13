@@ -12,8 +12,8 @@ defmodule Todo.Cache do
   end
 
   @impl GenServer
-  def init(_) do
-    Todo.Database.start()
+  def init(_opts) do
+    Todo.Database.start_link([])
     {:ok, %{}}
   end
 

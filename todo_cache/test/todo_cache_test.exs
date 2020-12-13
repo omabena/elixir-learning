@@ -17,5 +17,4 @@ defmodule TodoCacheTest do
 
     assert [%{date: ~D[2018-12-19], title: "Dentist"}] = entries
   end
-
 end
