@@ -1,19 +1,22 @@
 defmodule Todo.DatabaseWorker do
   use GenServer
 
-  @spec start(any) :: :ignore | {:error, any} | {:ok, pid}
-  def start(folder) do
-    IO.inspect("Starting database server.")
-    GenServer.start(__MODULE__, folder)
+  def start_link({db_folder, worker_id}) do
+    IO.inspect("Starting database worker #{worker_id}")
+    GenServer.start_link(__MODULE__, db_folder, name: via_tuple(worker_id))
   end
 
   @spec store(atom | pid | {atom, any} | {:via, atom, any}, any, any) :: :ok
   def store(worker_pid, key, data) do
-    GenServer.cast(worker_pid, {:store, key, data})
+    GenServer.cast(via_tuple(worker_pid), {:store, key, data})
   end
 
   def get(worker_pid, key) do
-    GenServer.call(worker_pid, {:get, key})
+    GenServer.call(via_tuple(worker_pid), {:get, key})
+  end
+
+  defp via_tuple(worker_id) do
+    Todo.ProcessRegistry.via_tuple({__MODULE__, worker_id})
   end
 
   @impl true
