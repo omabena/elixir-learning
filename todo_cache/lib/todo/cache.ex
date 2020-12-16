@@ -4,11 +4,24 @@ defmodule Todo.Cache do
   @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(_) do
     IO.puts("Starting to-do cache")
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+    DynamicSupervisor.start_link(
+      name: __MODULE__,
+      strategy: :one_for_one
+    )
+  end
+
+  defp start_child(todo_list_name) do
+    DynamicSupervisor.start_child(
+      __MODULE__,
+      {Todo.Server, todo_list_name}
+    )
   end
 
   def server_process(todo_list_name) do
-    GenServer.call(__MODULE__, {:server_process, todo_list_name})
+    case start_child(todo_list_name) do
+      {:ok, pid} -> pid
+      {:error, {:already_started, pid}} -> pid
+    end
   end
 
   @impl GenServer
@@ -23,7 +36,7 @@ defmodule Todo.Cache do
         {:reply, todo_server, todo_servers}
 
       :error ->
-        {:ok, new_server} = Todo.Server.start(todo_list_name)
+        {:ok, new_server} = Todo.Server.start_link(todo_list_name)
 
         {
           :reply,
