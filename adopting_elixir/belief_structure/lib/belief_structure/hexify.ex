@@ -1,5 +1,5 @@
 defmodule BeliefStructure.Hexify do
-  @moduledoc """
+  @doc """
   Append a value to packages names
   """
   @spec name(String.t()) :: String.t()
