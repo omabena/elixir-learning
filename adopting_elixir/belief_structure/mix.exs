@@ -4,6 +4,7 @@ defmodule BeliefStructure.MixProject do
   def project do
     [
       app: :belief_structure,
+      dialyzer: [plt_add_deps: :transitive],
       version: "0.1.0",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
@@ -23,7 +24,8 @@ defmodule BeliefStructure.MixProject do
     [
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
-      {:credo, "~>0.8.8", only: [:dev], runtime: false}
+      {:credo, "~> 0.8.8", only: [:dev], runtime: false},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
     ]
   end
 end
